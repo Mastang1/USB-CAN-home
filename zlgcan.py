@@ -451,11 +451,11 @@ class ZCAN(object):
 USBCAN-II Start Demo
 '''
 def can_I_start(zcanlib, device_handle, chn):
-    ip = zcanlib.GetIProperty(device_handle)
-    ret = zcanlib.SetValue(ip, str(chn) + "/baud_rate", "250000") #250Kbps
-    if ret != ZCAN_STATUS_OK:
-        print("Set CH%d CAN_E_U baud_rate failed!" %(chn))
-        exit(0)
+    # ip = zcanlib.GetIProperty(device_handle)
+    # ret = zcanlib.SetValue(ip, str(chn) + "/baud_rate", "250000") #250Kbps
+    # if ret != ZCAN_STATUS_OK:
+    #     print("Set CH%d CAN_E_U baud_rate failed!" %(chn))
+    #     exit(0)
     chn_init_cfg = ZCAN_CHANNEL_INIT_CONFIG()
     chn_init_cfg.can_type = ZCAN_TYPE_CAN
     chn_init_cfg.config.can.acc_code = 0
@@ -465,7 +465,7 @@ def can_I_start(zcanlib, device_handle, chn):
     if chn_handle ==0:
         print("initCAN failed!" %(chn))  
         exit(0)
-    zcanlib.ReleaseIProperty(ip) 
+    # zcanlib.ReleaseIProperty(ip) 
     
     ret=zcanlib.StartCAN(chn_handle)
     if ret != ZCAN_STATUS_OK:
