@@ -92,7 +92,7 @@
 				</meta>
 			</canfd_exp>
 			<canfd_abit_baud_rate flag="0x0046" at_initcan="pre">
-				<value>1000000</value>
+				<value>500000</value>
 				<meta>
 					<type>options.int32</type>
 					<desc>仲裁域波特率</desc>
@@ -109,7 +109,7 @@
 				</meta>
 			</canfd_abit_baud_rate>
 			<canfd_dbit_baud_rate flag="0x0047" at_initcan="pre">
-				<value>5000000</value>
+				<value>500000</value>
 				<meta>
 					<type>options.int32</type>
 					<desc>数据域波特率</desc>
@@ -343,7 +343,7 @@
 				</meta>
 			</get_bus_usage>
 			<tx_timeout flag="0x0051" at_initcan="post">
-				<value>0</value>
+				<value>100</value>
 				<meta>
 					<type>uint32</type>
 					<visible>false</visible>
@@ -548,7 +548,7 @@
 				</meta>
 			</canfd_exp>
 			<canfd_abit_baud_rate flag="0x0146" at_initcan="pre">
-				<value>1000000</value>
+				<value>500000</value>
 				<meta>
 					<type>options.int32</type>
 					<desc>仲裁域波特率</desc>
@@ -565,7 +565,7 @@
 				</meta>
 			</canfd_abit_baud_rate>
 			<canfd_dbit_baud_rate flag="0x0147" at_initcan="pre">
-				<value>1000000</value>
+				<value>500000</value>
 				<meta>
 					<type>options.int32</type>
 					<desc>数据域波特率</desc>
@@ -914,7 +914,7 @@
 					<desc>获取设备发送回显状态</desc>
 				</meta>
 			</get_device_tx_echo>
-						<get_upload_message_compress flag="0x0127">
+			<get_upload_message_compress flag="0x0127">
 				<value>0</value>
 				<meta>
 					<visible>false</visible>
@@ -1004,7 +1004,7 @@
 				</meta>
 			</canfd_exp>
 			<canfd_abit_baud_rate flag="0x0246" at_initcan="pre">
-				<value>1000000</value>
+				<value>500000</value>
 				<meta>
 					<type>options.int32</type>
 					<desc>仲裁域波特率</desc>
@@ -1021,7 +1021,7 @@
 				</meta>
 			</canfd_abit_baud_rate>
 			<canfd_dbit_baud_rate flag="0x0247" at_initcan="pre">
-				<value>1000000</value>
+				<value>500000</value>
 				<meta>
 					<type>options.int32</type>
 					<desc>数据域波特率</desc>
@@ -1255,7 +1255,7 @@
 				</meta>
 			</get_bus_usage>
 			<tx_timeout flag="0x0251" at_initcan="post">
-				<value>0</value>
+				<value>100</value>
 				<meta>
 					<type>uint32</type>
 					<visible>false</visible>
@@ -1826,7 +1826,7 @@
 					<desc>获取设备发送回显状态</desc>
 				</meta>
 			</get_device_tx_echo>
-						<get_upload_message_compress flag="0x0327">
+			<get_upload_message_compress flag="0x0327">
 				<value>0</value>
 				<meta>
 					<visible>false</visible>

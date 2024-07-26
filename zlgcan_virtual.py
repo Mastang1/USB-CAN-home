@@ -103,7 +103,6 @@ ZCAN_CANFDDTU_800EWGR_TCP   = ZCAN_DEVICE_TYPE(70)
 ZCAN_CANFDDTU_800EWGR_UDP   = ZCAN_DEVICE_TYPE(71)
 ZCAN_CANFDDTU_600EWGR_TCP   = ZCAN_DEVICE_TYPE(72)
 ZCAN_CANFDDTU_600EWGR_UDP   = ZCAN_DEVICE_TYPE(73)
-ZCAN_USBCANFD_400U          = ZCAN_DEVICE_TYPE(76)
 ZCAN_VIRTUAL_DEVICE         = ZCAN_DEVICE_TYPE(99)
 
 '''
@@ -462,7 +461,6 @@ def can_I_start(zcanlib, device_handle, chn):
     if chn_handle ==0:
         print("initCAN failed!" %(chn))  
         exit(0)
-    # zcanlib.ReleaseIProperty(ip) 
     
     ret=zcanlib.StartCAN(chn_handle)
     if ret != ZCAN_STATUS_OK:
@@ -474,11 +472,11 @@ def can_I_start(zcanlib, device_handle, chn):
 
 if __name__ == "__main__":
     zcanlib = ZCAN() 
-    handle = zcanlib.OpenDevice(ZCAN_USBCAN2, 0,0)  
+    handle = zcanlib.OpenDevice(ZCAN_VIRTUAL_DEVICE, 0,0)  
     if handle == INVALID_DEVICE_HANDLE:
         print("Open USBCAN-II device failed!")
         exit(0)
-    print("Open USBCAN-II device success!")
+    print("Open virtual device success!")
 
     print("device handle:%d." %(handle))
 
@@ -492,7 +490,7 @@ if __name__ == "__main__":
     print("channel handle:%d." %(chn_handle))
 
     #Send CAN Messages
-    transmit_num = 10
+    transmit_num = 50
     msgs = (ZCAN_Transmit_Data * transmit_num)()
     for i in range(transmit_num):
         msgs[i].transmit_type = 2 #0-正常发送，2-自发自收
@@ -513,18 +511,18 @@ if __name__ == "__main__":
     #Receive Messages
     while True:
 
-        rcv_num = zcanlib.GetReceiveNum(chn_handle, ZCAN_TYPE_CAN) #返回值为接收缓存里面的CAN帧数
-        rcv_canfd_num = zcanlib.GetReceiveNum(chn_handle, ZCAN_TYPE_CANFD)   #返回值为接收缓存里面的CANFD帧数
-        if rcv_num:
-            
-            rcv_msg, rcv_num = zcanlib.Receive(chn_handle, rcv_num)
+        # rcv_num = zcanlib.GetReceiveNum(chn_handle, ZCAN_TYPE_CAN) #返回值为接收缓存里面的CAN帧数
+        if True:
+
+            rcv_msg, rcv_num = zcanlib.Receive(chn_handle, 100)
+            print("Receivde CAN frames are:", rcv_num)
             for i in range(rcv_num):
                 print("[%d]:timestamps:%d,type:CAN, id:%s, dlc:%d, eff:%d, rtr:%d, data:%s" %(i, rcv_msg[i].timestamp, 
                       hex(rcv_msg[i].frame.can_id), rcv_msg[i].frame.can_dlc, 
                       rcv_msg[i].frame.eff, rcv_msg[i].frame.rtr,
                       ''.join(hex(rcv_msg[i].frame.data[j])+ ' 'for j in range(rcv_msg[i].frame.can_dlc))))
                    
-            
+        break
         if thread.is_alive() == False:
             break
             

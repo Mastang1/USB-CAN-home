@@ -10,12 +10,8 @@ else:
 
 
 class TfcZlgCan(): #Basic class DevIf
-    '''
-    This class wrapper zlgCan, and privide a method to test can function.
-    In config string, can_type is used as an idetifier to distinguish between can and canfd
-    '''
     __gDevHandle = INVALID_DEVICE_HANDLE
-    __defaultConfig = {"can_dev_type":ZCAN_USBCANFD_400U,"can_channel":0, "can_baudrate":500000,
+    __defaultConfig = {"can_dev_type":ZCAN_USBCAN2,"can_channel":0, "can_baudrate":500000,
                        "can_type":ZCAN_TYPE_CAN, "test_frame_id":0x100, "receive_timeout_s":5}
 
     def __init__(self, config = __defaultConfig ):
@@ -66,13 +62,23 @@ class TfcZlgCan(): #Basic class DevIf
         
         # Config and initialization
         chn_init_cfg = ZCAN_CHANNEL_INIT_CONFIG()
-        chn_init_cfg.can_type = ZCAN_TYPE_CANFD
-        # chn_init_cfg.config.canfd.acc_mode = 0
-        # chn_init_cfg.config.canfd.acc_mask = 0xFFFFFFFF
-        # chn_init_cfg.config.canfd.brp = 0
-        # chn_init_cfg.config.canfd.filter = 1
-        chn_init_cfg.config.canfd.mode = 0
-        # chn_init_cfg.config.canfd.pad = 0 
+        chn_init_cfg.can_type = self.configInfo["can_type"]
+        print("Configure can channel type is :", chn_init_cfg.can_type)
+        if chn_init_cfg.can_type == 0:
+            chn_init_cfg.config.can.acc_mode = 0
+            chn_init_cfg.config.can.acc_mask = 0xFFFFFFFF
+            # chn_init_cfg.config.can.filter = 1
+            # 3 transmit only once 2. trasmit to self  1. just listen
+            chn_init_cfg.config.can.mode = 0
+            # chn_init_cfg.config.can.pad = 0 
+
+        else:
+            # chn_init_cfg.config.canfd.acc_mode = 0
+            # chn_init_cfg.config.canfd.acc_mask = 0xFFFFFFFF
+            # chn_init_cfg.config.canfd.brp = 0
+            # chn_init_cfg.config.canfd.filter = 1
+            chn_init_cfg.config.canfd.mode = 0
+            # chn_init_cfg.config.canfd.pad = 0 
 
         self.tfcCanChanHandle = self.zcanLib.InitCAN(TfcZlgCan.__gDevHandle, self.configInfo["can_channel"], chn_init_cfg)
 
@@ -111,34 +117,17 @@ class TfcZlgCan(): #Basic class DevIf
     '''
     def read(self):
         listFrames = []
-
-        rcv_num = self.zcanLib.GetReceiveNum(self.tfcCanChanHandle, self.configInfo['can_type'])
-
+        # rcv_num = self.zcanLib.GetReceiveNum(self.tfcCanChanHandle, self.configInfo['can_type'])
+        rcv_num = self.zcanLib.GetReceiveNum(self.tfcCanChanHandle, 0)
+        print("Received data number is:", rcv_num)
         if rcv_num > 0:
-            print("Receive message number: %d" %rcv_num)
-
-            if self.configInfo['can_type'] == ZCAN_TYPE_CAN:
-                rcv_msg, rcv_num = self.zcanLib.Receive(self.tfcCanChanHandle, rcv_num = rcv_num)
-                for i in range(rcv_num):
-                    data = []
-                    for j in range(rcv_msg[i].frame.can_dlc):
-                        data.append(rcv_msg[i].frame.data[j])
-                    listFrames.append({'id':rcv_msg[i].frame.can_id, 'len':rcv_msg[i].frame.can_dlc, 'data':data})
-                    '''
-                    for i in range(rcv_num):
-                        print("[%d]:timestamps:%d,type:CAN, id:%s, dlc:%d, eff:%d, rtr:%d, data:%s" %(i, rcv_msg[i].timestamp, 
-                            hex(rcv_msg[i].frame.can_id), rcv_msg[i].frame.can_dlc, 
-                            rcv_msg[i].frame.eff, rcv_msg[i].frame.rtr,
-                            ''.join(hex(rcv_msg[i].frame.data[j])+ ' 'for j in range(rcv_msg[i].frame.can_dlc))))
-                                
-                    '''
-            elif self.configInfo['can_type'] == ZCAN_TYPE_CANFD:
-                rcv_msg, rcv_num = self.zcanLib.ReceiveFD(chn_handle = self.tfcCanChanHandle, rcv_num = rcv_num, wait_time = 1000)
-                for i in range(rcv_num):
-                    data = []
-                    for j in range(rcv_msg[i].frame.len):
-                        data.append(rcv_msg[i].frame.data[j])
-                    listFrames.append({'id':rcv_msg[i].frame.can_id, 'len':rcv_msg[i].frame.len, 'data':data})
+            print("Receive CAN message number: %d" %rcv_num)
+            rcv_msg, rcv_num = self.zcanLib.Receive(self.tfcCanChanHandle, rcv_num = rcv_num)
+            for i in range(rcv_num):
+                data = []
+                for j in range(rcv_msg[i].frame.can_dlc):
+                    data.append(rcv_msg[i].frame.data[j])
+                listFrames.append({'id':rcv_msg[i].frame.can_id, 'len':rcv_msg[i].frame.can_dlc, 'data':data})
             '''
             for i in range(rcv_num):
                 print("[%d]:timestamps:%d,type:CAN, id:%s, dlc:%d, eff:%d, rtr:%d, data:%s" %(i, rcv_msg[i].timestamp, 
@@ -160,19 +149,11 @@ class TfcZlgCan(): #Basic class DevIf
             exit(0)
         data += '.'
         byteData = data.encode()
+        dataRcv = self.__data2Frames(byteData)
+        ret = self.zcanLib.Transmit(self.tfcCanChanHandle, dataRcv[1], dataRcv[0])
+        print("Tranmit Num: %d." % ret)
 
-        if self.configInfo['can_type'] == ZCAN_TYPE_CAN:
-            struFrame = self.__data2CanFrames(byteData)
-            ret = self.zcanLib.Transmit(self.tfcCanChanHandle, struFrame[1], struFrame[0])
-            print("Tranmit can Num: %d." % ret)
-        elif self.configInfo['can_type'] == ZCAN_TYPE_CANFD:
-            struFrame = self.__data2CanfdFrames(byteData)
-            ret = self.zcanLib.TransmitFD(self.tfcCanChanHandle, struFrame[1], struFrame[0])
-            print("Tranmit canfd Num: %d." % ret)
-
-
-
-    def __data2CanFrames(self, data):
+    def __data2Frames(self, data):
         if not isinstance(data, (bytes, bytearray)):
             return None
         
@@ -205,45 +186,6 @@ class TfcZlgCan(): #Basic class DevIf
                     msgs[i].frame.data[j] = data[8 * i + j]
 
         return [transmit_num, msgs]
-
-    def __data2CanfdFrames(self, data):
-        if not isinstance(data, (bytes, bytearray)):
-            return None
-        
-        if len(data) % 64:
-            transmit_num = len(data) // 64 + 1
-            msgs = (ZCAN_TransmitFD_Data * transmit_num)()
-            for i in range(transmit_num):
-
-                msgs[i].transmit_type = 0 # 0-Normal，2-Only oneself
-                msgs[i].frame.eff     = 0 # 0-Stand frame，1-Extended frame
-                msgs[i].frame.rtr     = 0 # 0-Data frame，1-Remote frame
-                msgs[i].frame.brs     = 1 #BRS 加速标志位：0不加速，1加速
-                msgs[i].frame.can_id  = i
-
-                if i == (transmit_num - 1):
-                    msgs[i].frame.len = len(data) % 64
-                else:
-                    msgs[i].frame.len = 64
-                
-                for j in range(msgs[i].frame.len):
-                    msgs[i].frame.data[j] = data[64 * i + j]
-        else:
-            transmit_num = len(data) // 64
-            msgs = (ZCAN_TransmitFD_Data * transmit_num)()
-            for i in range(transmit_num):
-                msgs[i].transmit_type = 0 # 0-Normal，2-Only oneself
-                msgs[i].frame.eff     = 0 # 0-Stand frame，1-Extended frame
-                msgs[i].frame.rtr     = 0 # 0-Data frame，1-Remote frame
-                msgs[i].frame.brs     = 1 #BRS 加速标志位：0不加速，1加速
-                msgs[i].frame.can_id  = i
-                msgs[i].frame.len = 64
-                
-                for j in range(msgs[i].frame.len):
-                    msgs[i].frame.data[j] = data[64 * i + j]
-
-        return [transmit_num, msgs]
-
 
     def getTestResult(self):
 
@@ -297,15 +239,13 @@ def testCanIf():
     thread=threading.Thread(target=input_thread)
     thread.start()
 
-    myCanConfig = {"can_dev_type":ZCAN_USBCANFD_400U,"can_channel":0, "canfd_abit_baud_rate":500000,
-                   "canfd_dbit_baud_rate":500000,"can_type":ZCAN_TYPE_CANFD, "test_frame_id":0x100, 
-                   "receive_timeout_s":5}
+    myCanConfig = {"can_dev_type":ZCAN_USBCANFD_400U,"can_channel":0, "can_baudrate":500000,
+                       "can_type":ZCAN_TYPE_CANFD, "test_frame_id":0x100, "receive_timeout_s":5}
     myCan = TfcZlgCan(config=myCanConfig)
     myCan.open()
 
-    myCanConfig2 = {"can_dev_type":ZCAN_USBCANFD_400U,"can_channel":2, "canfd_abit_baud_rate":500000,
-                   "canfd_dbit_baud_rate":500000,"can_type":ZCAN_TYPE_CANFD, "test_frame_id":0x100, 
-                   "receive_timeout_s":5}
+    myCanConfig2 = {"can_dev_type":ZCAN_USBCANFD_400U,"can_channel":2, "can_baudrate":500000,
+                       "can_type":ZCAN_TYPE_CANFD, "test_frame_id":0x100, "receive_timeout_s":5}
     myCan2 = TfcZlgCan(config=myCanConfig2)
     myCan2.open()
 
@@ -316,9 +256,7 @@ def testCanIf():
 
 
     while True:
-        dataSend = 'Today is a nice day Today is a nice day Today is a nice day Today is a nice day Today is a nice day'
-        dataSend += dataSend
-        dataSend += '.'
+        dataSend = 'Today is a nice day.\n'
         myCan.write(data=dataSend)
         time.sleep(2)
 
